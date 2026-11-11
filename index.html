@@ -7,7 +7,7 @@
 
 <title>Absensi Wisuda UNTAG Samarinda</title>
 
-<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
 <style>
 * {
@@ -93,6 +93,30 @@ button {
   color: #777;
   margin-top: 18px;
 }
+
+  /* AREA SCANNER QR CODE */
+
+#reader {
+  width: 100%;
+  min-height: 280px;
+  margin: 20px auto;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #222;
+}
+
+#reader video {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  max-height: 400px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+#reader canvas {
+  max-width: 100%;
+}
 </style>
 </head>
 
@@ -172,16 +196,16 @@ function mulaiScan() {
   scanner = new Html5Qrcode("reader");
 
   scanner.start(
-    { facingMode: "environment" },
+  { facingMode: "environment" },
 
-    {
-      fps: 10,
-      qrbox: {
-        width: 230,
-        height: 230
-      },
-      aspectRatio: 1
+  {
+    fps: 10,
+    qrbox: {
+      width: 230,
+      height: 230
     },
+    aspectRatio: 1.333333
+  },
 
     scanBerhasil
 
