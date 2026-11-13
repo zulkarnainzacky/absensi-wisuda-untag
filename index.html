@@ -43,7 +43,24 @@ p {
 
 #reader {
   width: 100%;
+  min-height: 280px;
   margin: 20px auto;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #222;
+}
+
+#reader video {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  max-height: 400px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+#reader canvas {
+  max-width: 100%;
 }
 
 button {
@@ -93,30 +110,6 @@ button {
   color: #777;
   margin-top: 18px;
 }
-
-  /* AREA SCANNER QR CODE */
-
-#reader {
-  width: 100%;
-  min-height: 280px;
-  margin: 20px auto;
-  overflow: hidden;
-  border-radius: 12px;
-  background: #222;
-}
-
-#reader video {
-  display: block !important;
-  width: 100% !important;
-  height: auto !important;
-  max-height: 400px;
-  object-fit: cover;
-  border-radius: 10px;
-}
-
-#reader canvas {
-  max-width: 100%;
-}
 </style>
 </head>
 
@@ -144,11 +137,6 @@ button {
     Tekan tombol MULAI SCAN untuk mengaktifkan kamera.
   </div>
 
-  <button id="btnOK" onclick="lanjutScan()" 
-        style="display:none; margin-top:15px;">
-  OK - SCAN BERIKUTNYA
-</button>
-  
   <div class="info">
     Sistem Absensi Digital Wisuda UNTAG Samarinda
   </div>
@@ -157,9 +145,7 @@ button {
 
 <script>
 
-// GANTI DENGAN URL WEB APP APPS SCRIPT MILIK ANDA
-
-
+// URL WEB APP APPS SCRIPT
 const API_URL =
   "https://script.google.com/macros/s/AKfycby2WqjXjLIF61w7FtuGLTmHXnGC1e9C42d8szEXrcJEn5bFUGBXWkYFfgDaZ6wzr48Iqg/exec";
 
@@ -172,9 +158,12 @@ let requestTimeout = null;
 
 // MENAMPILKAN PESAN
 function tampilkan(pesan, status = "") {
+
   const box = document.getElementById("hasil");
+
   box.className = "hasil " + status;
   box.innerText = pesan;
+
 }
 
 
@@ -187,43 +176,49 @@ function mulaiScan() {
       !navigator.mediaDevices) {
 
     tampilkan(
-      "Browser tidak mendukung akses kamera. Pastikan halaman dibuka melalui HTTPS.",
+      "Browser tidak mendukung akses kamera. " +
+      "Pastikan halaman dibuka melalui HTTPS.",
       "gagal"
     );
+
     return;
   }
 
   if (typeof Html5Qrcode === "undefined") {
+
     tampilkan(
-      "Library QR Scanner gagal dimuat. Periksa koneksi internet dan muat ulang halaman.",
+      "Library QR Scanner gagal dimuat. Periksa koneksi internet.",
       "gagal"
     );
+
     return;
   }
 
   tampilkan("Meminta izin kamera...");
 
-  const btnMulai = document.getElementById("btnMulai");
-  btnMulai.disabled = true;
+  document.getElementById("btnMulai").disabled = true;
 
   scanner = new Html5Qrcode("reader");
 
   scanner.start(
     { facingMode: "environment" },
+
     {
       fps: 10,
-      qrbox: { width: 230, height: 230 },
+      qrbox: {
+        width: 230,
+        height: 230
+      },
       aspectRatio: 1.333333
     },
+
     scanBerhasil
 
   ).then(function() {
 
     scannerAktif = true;
 
-    btnMulai.hidden = true;
-    btnMulai.disabled = false;
-
+    document.getElementById("btnMulai").hidden = true;
     document.getElementById("btnStop").hidden = false;
 
     tampilkan(
@@ -233,20 +228,22 @@ function mulaiScan() {
   }).catch(function(error) {
 
     scannerAktif = false;
-    btnMulai.disabled = false;
+
+    document.getElementById("btnMulai").disabled = false;
 
     tampilkan(
       "Gagal mengaktifkan kamera.\n\n" +
       error +
-      "\n\nPeriksa izin kamera browser dan coba kembali.",
+      "\n\nPeriksa izin kamera Chrome dan coba kembali.",
       "gagal"
     );
 
   });
+
 }
 
 
-// KETIKA QR BERHASIL TERBACA
+// KETIKA QR CODE TERBACA
 function scanBerhasil(teks) {
 
   if (sedangProses) return;
@@ -258,19 +255,32 @@ function scanBerhasil(teks) {
   tampilkan("Memeriksa identitas peserta...");
 
   kirimKeServer(teks.trim());
+
 }
 
 
 // MENGIRIM TOKEN KE APPS SCRIPT
 function kirimKeServer(token) {
 
-  bersihkanRequest();
+  if (requestScript) {
+    requestScript.remove();
+    requestScript = null;
+  }
+
+  clearTimeout(requestTimeout);
 
   const callbackName = "absensiCallback";
 
   window[callbackName] = function(data) {
 
-    bersihkanRequest();
+    clearTimeout(requestTimeout);
+
+    if (requestScript) {
+      requestScript.remove();
+      requestScript = null;
+    }
+
+    delete window[callbackName];
 
     tampilkanHasil(data);
 
@@ -299,7 +309,7 @@ function kirimKeServer(token) {
       "gagal"
     );
 
-    document.getElementById("btnOK").style.display = "block";
+    lanjutScan(3000);
 
   };
 
@@ -314,7 +324,7 @@ function kirimKeServer(token) {
       "gagal"
     );
 
-    document.getElementById("btnOK").style.display = "block";
+    lanjutScan(3000);
 
   }, 20000);
 
@@ -339,8 +349,6 @@ function bersihkanRequest() {
 
 // MENAMPILKAN HASIL ABSENSI
 function tampilkanHasil(data) {
-
-  const btn = document.getElementById("btnOK");
 
   if (data.sukses) {
 
@@ -372,26 +380,30 @@ function tampilkanHasil(data) {
 
   }
 
-  // Hasil tetap tampil sampai tombol OK ditekan
-  btn.style.display = "block";
+  // OTOMATIS MELANJUTKAN SCAN SETELAH 2,5 DETIK
+  lanjutScan(2500);
 
 }
 
 
-// MELANJUTKAN SCAN SETELAH TOMBOL OK
-function lanjutScan() {
+// MELANJUTKAN SCAN
+function lanjutScan(durasi) {
 
-  document.getElementById("btnOK").style.display = "none";
+  setTimeout(function() {
 
-  tampilkan(
-    "Arahkan kamera ke QR Code undangan wisudawan."
-  );
+    sedangProses = false;
 
-  sedangProses = false;
+    if (scannerAktif && scanner) {
 
-  if (scannerAktif && scanner) {
-    scanner.resume();
-  }
+      scanner.resume();
+
+      tampilkan(
+        "Silakan scan QR Code wisudawan berikutnya."
+      );
+
+    }
+
+  }, durasi);
 
 }
 
@@ -416,8 +428,6 @@ function berhentiScan() {
 
     document.getElementById("btnStop").hidden = true;
 
-    document.getElementById("btnOK").style.display = "none";
-
     sedangProses = false;
 
     tampilkan(
@@ -434,7 +444,6 @@ function berhentiScan() {
   });
 
 }
-
 
 </script>
 
