@@ -144,6 +144,11 @@ button {
     Tekan tombol MULAI SCAN untuk mengaktifkan kamera.
   </div>
 
+  <button id="btnOK" onclick="lanjutScan()" 
+        style="display:none; margin-top:15px;">
+  OK - SCAN BERIKUTNYA
+</button>
+  
   <div class="info">
     Sistem Absensi Digital Wisuda UNTAG Samarinda
   </div>
@@ -292,7 +297,18 @@ function kirimKeServer(token) {
 
   requestScript.src = url;
 
-  requestScript.onerror = function() {
+ requestScript.onerror = function() {
+
+  bersihkanRequest();
+
+  tampilkan(
+    "Koneksi ke server gagal. Periksa internet dan coba kembali.",
+    "gagal"
+  );
+
+  document.getElementById("btnOK").style.display = "block";
+
+};
 
     bersihkanRequest();
 
@@ -307,7 +323,19 @@ function kirimKeServer(token) {
 
   document.body.appendChild(requestScript);
 
-  requestTimeout = setTimeout(function() {
+requestTimeout = setTimeout(function() {
+
+  bersihkanRequest();
+
+  tampilkan(
+    "Server tidak merespons. Silakan coba kembali.",
+    "gagal"
+  );
+
+  document.getElementById("btnOK").style.display = "block";
+
+}, 20000);
+  
 
     bersihkanRequest();
 
@@ -337,7 +365,10 @@ function bersihkanRequest() {
 }
 
 
+
 function tampilkanHasil(data) {
+
+  const btn = document.getElementById("btnOK");
 
   if (data.sukses) {
 
@@ -368,6 +399,11 @@ function tampilkanHasil(data) {
     );
 
   }
+
+  // Tampilkan tombol OK
+  btn.style.display = "block";
+}
+
 
   lanjutScan(2500);
 
@@ -421,6 +457,24 @@ function berhentiScan() {
     tampilkan("Gagal menghentikan kamera: " + error, "gagal");
 
   });
+
+}
+
+
+function lanjutScan() {
+
+  document.getElementById("btnOK").style.display = "none";
+
+  document.getElementById("hasil").className = "hasil";
+
+  document.getElementById("hasil").innerText =
+    "Arahkan kamera ke QR Code undangan wisudawan.";
+
+  sedangProses = false;
+
+  if (scannerAktif && scanner) {
+    scanner.resume();
+  }
 
 }
 
