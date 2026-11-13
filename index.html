@@ -110,6 +110,24 @@ button {
   color: #777;
   margin-top: 18px;
 }
+
+  #btnOK {
+  display: none;
+  width: 100%;
+  padding: 15px;
+  margin-top: 15px;
+  background: #198754;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#btnOK:hover {
+  background: #146c43;
+}
 </style>
 </head>
 
@@ -133,9 +151,13 @@ button {
     BERHENTI SCAN
   </button>
 
-  <div id="hasil" class="hasil">
-    Tekan tombol MULAI SCAN untuk mengaktifkan kamera.
-  </div>
+<div id="hasil">
+  Arahkan kamera ke QR Code pada undangan wisudawan.
+</div>
+
+<button id="btnOK" onclick="lanjutScan()" style="display:none;">
+  OK - LANJUT SCAN
+</button>
 
   <div class="info">
     Sistem Absensi Digital Wisuda UNTAG Samarinda
@@ -350,36 +372,34 @@ function bersihkanRequest() {
 // MENAMPILKAN HASIL ABSENSI
 function tampilkanHasil(data) {
 
+  const hasil = document.getElementById("hasil");
+  const btnOK = document.getElementById("btnOK");
+
   if (data.sukses) {
 
-    tampilkan(
-      "✓ BERHASIL HADIR\n\n" +
-      "Nama: " + data.nama +
-      "\nNIM: " + data.nim +
-      "\nFakultas: " + data.fakultas +
-      "\nWaktu: " + data.waktu,
-      "sukses"
-    );
-
-  } else if (data.duplikat) {
-
-    tampilkan(
-      "⚠ SUDAH ABSENSI\n\n" +
-      "Nama: " + data.nama +
-      "\nNIM: " + data.nim +
-      "\nPeserta telah tercatat hadir sebelumnya.",
-      "gagal"
-    );
+    hasil.innerHTML =
+      "✓ BERHASIL HADIR<br><br>" +
+      "Nama: " + data.nama + "<br>" +
+      "NIM: " + data.nim + "<br>" +
+      "Fakultas: " + data.fakultas + "<br>" +
+      "Waktu: " + data.waktu;
 
   } else {
 
-    tampilkan(
-      "✕ ABSENSI GAGAL\n\n" + data.pesan,
-      "gagal"
-    );
+    hasil.innerHTML =
+      "⚠ " + (data.pesan || "Scan tidak berhasil.");
 
+    if (data.nama) {
+      hasil.innerHTML +=
+        "<br><br>Nama: " + data.nama +
+        "<br>NIM: " + data.nim;
+    }
   }
 
+  // Tampilkan tombol OK
+  btnOK.style.display = "block";
+
+}
   // OTOMATIS MELANJUTKAN SCAN SETELAH 2,5 DETIK
   lanjutScan(2500);
 
@@ -387,23 +407,25 @@ function tampilkanHasil(data) {
 
 
 // MELANJUTKAN SCAN
-function lanjutScan(durasi) {
+function lanjutScan() {
 
-  setTimeout(function() {
+  const hasil = document.getElementById("hasil");
+  const btnOK = document.getElementById("btnOK");
 
-    sedangProses = false;
+  // Sembunyikan tombol OK
+  btnOK.style.display = "none";
 
-    if (scannerAktif && scanner) {
+  // Kembalikan tampilan awal
+  hasil.innerHTML =
+    "Arahkan kamera ke QR Code pada undangan wisudawan.";
 
-      scanner.resume();
+  // Izinkan proses scan berikutnya
+  sedangProses = false;
 
-      tampilkan(
-        "Silakan scan QR Code wisudawan berikutnya."
-      );
-
-    }
-
-  }, durasi);
+  // Lanjutkan kamera jika scanner masih aktif
+  if (scanner && sedangScan) {
+    scanner.resume();
+  }
 
 }
 
